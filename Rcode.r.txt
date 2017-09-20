@@ -1,0 +1,332 @@
+#money rate
+install.packages("readxl")
+install.packages("readr")
+install.packages("sqldf")
+install.packages("car")
+install.packages('stringr')
+install.packages('tcltk')
+library(stringr)
+library(car)
+library(readxl)
+library(readr)
+library(sqldf)
+library(tcltk)
+dollar <- read_excel("C:/Users/lkjs8/Desktop/big/final/dollar.xls")
+yen <- read_excel("C:/Users/lkjs8/Desktop/big/final/yen2.xls", col_types = c("date", "text"))
+yuan <- read_excel("C:/Users/lkjs8/Desktop/big/final/yuan.xls")
+names(dollar)[names(dollar) == "한국은행기준율"] <- "dr"
+names(yen)[names(yen) == "한국은행기준율"] <- "yr"
+names(yuan)[names(yuan) == "한국은행기준율"] <- "yur"
+names(dollar)[names(dollar) == "일자"] <- "date"
+names(yen)[names(yen) == "일자"] <- "date"
+names(yuan)[names(yuan) == "일자"] <- "date"
+dollar <- na.omit(dollar)
+yen <- na.omit(yen)
+yuan <- na.omit(yuan)
+d <- dollar[c("date","dr")]
+y <- yen[c("date","yr")]
+yu <- yuan[c("date","yur")]
+
+jejunum <- read_csv("C:/Users/lkjs8/Desktop/big/final/1-1490.csv", 
+                    col_types = cols(date = col_character()))
+jejunum <- jejunum[c("number", "date")]
+d$date <- as.character(d$date)
+y$date <- as.character(y$date)
+yu$date <- as.character(yu$date)
+d$dr <- as.numeric(d$dr)
+y$yr <- as.numeric(y$yr)
+yu$yur <- as.numeric(yu$yur)
+data <- sqldf("select * from jejunum natural join d")
+data <- sqldf("select * from data natural join y")
+data <- sqldf("select * from data natural join yu")
+data <- na.omit(data)
+
+#linear <- lm(number ~ dr, data = data)
+#summary(linear)
+#linear <- lm(number ~ yr, data = data)
+#summary(linear)
+#data$yur <- as.numeric(data$yur)
+#linear <- lm(number ~ yur, data = data)
+#summary(linear)
+
+#linear <- lm(number ~ dr+yr+yur, data = data)
+#summary(linear)
+
+
+#vif(linear)
+#outlierTest(linear)
+
+dateCol <- jejunum
+
+dateCol <- data.frame(dateCol)
+dateCol <- na.omit(dateCol)
+dateCol$date <- as.character(dateCol$date)
+
+colnames(dateCol) <- c("number","date")
+newTable <- merge(dateCol,data,all.x=TRUE)
+
+
+
+for(i in 1:nrow(newTable))
+{
+  tmpString1 <- newTable$dr[i]
+  tmpString2 <- newTable$yr[i]
+  tmpString3 <- newTable$yur[i]
+  if(is.na(tmpString1)==TRUE || is.na(tmpString2) == TRUE || is.na(tmpString3) == TRUE) #만약 NA이면
+  {
+    if(i==1) #맨 처음 row일경우
+    {
+      newTable$dr[i] <- newTable$dr[2]
+      newTable$yr[i] <- newTable$yr[2]
+      newTable$yur[i] <- newTable$yur[2]
+    }
+    else
+    {
+      newTable$dr[i] <- newTable$dr[i-1]
+      newTable$yr[i] <- newTable$yr[i-1]
+      newTable$yur[i] <- newTable$yur[i-1]
+    }
+  }
+}
+
+linear <- lm(number ~ dr, data = newTable)
+summary(linear)
+linear <- lm(number ~ yr, data = newTable)
+summary(linear)
+#data$yur <- as.numeric(data$yur)
+linear <- lm(number ~ yur, data = newTable)
+summary(linear)
+
+linear <- lm(number ~ dr+yr+yur, data = newTable)
+summary(linear)
+
+vif(linear)
+outlierTest(linear)
+
+newTable <- newTable[-1,]
+newTable <- newTable[-2,]
+newTable <- newTable[-4,]
+
+linear <- lm(number ~ dr+yr+yur, data = newTable)
+summary(linear)
+
+#weather
+jejunum <- read_csv("C:/Users/lkjs8/Desktop/big/final/1-1490.csv", 
+                    col_types = cols(date = col_character()))
+jejunum <- jejunum[c("number", "date")]
+
+jeju <- read_excel("C:/Users/lkjs8/Desktop/big/final/jeju.xls")
+names(jeju)[names(jeju) == "지점"] <- "spot"
+names(jeju)[names(jeju) == "일자"] <- "date"
+names(jeju)[names(jeju) == "평균기온 (℃)"] <- "avgtemp"
+names(jeju)[names(jeju) == "일강수량 (mm)"] <- "avgrain"
+names(jeju)[names(jeju) == "평균풍속 (m/s)"] <- "avgwv"
+names(jeju)[names(jeju) == "평균습도 (%)"] <- "avghum"
+names(jeju)[names(jeju) == "평균전운량 (1/10)"] <- "avgc"
+names(jeju)[names(jeju) == "일사합 (MJ/m²)"] <- "sun"
+jeju <- jeju[c("spot", "date", "avgtemp", "avgrain", "avgwv", "avghum", "avgc", "sun")]
+
+jeju$date <- as.character(jeju$date)
+nd <- sqldf("select * from newTable natural join jeju ")
+
+for(i in 1:nrow(nd))
+{
+  if(is.na(nd$avgrain[i])==TRUE)
+  {
+    nd$avgrain[i] <- 0
+  }
+}
+
+linear <- lm(number~avgtemp, data=nd)
+summary(linear)
+linear <- lm(number~avgrain, data=nd)
+summary(linear)
+linear <- lm(number~avgwv, data=nd)
+summary(linear)
+linear <- lm(number~avghum, data=nd)
+summary(linear)
+linear <- lm(number~avgc, data=nd)
+summary(linear)
+linear <- lm(number~sun, data=nd)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+avgc+sun, data=nd)
+summary(linear)
+
+vif(linear)
+outlierTest(linear)
+
+nd <- nd[-2,]
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+avgc+sun, data=nd)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+avgc+sun+dr+yr+yur, data=nd)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain+avgwv+sun+dr+yr+yur, data=nd)
+summary(linear)
+
+vif(linear)
+outlierTest(linear)
+
+nd <- nd[-1,]
+linear <- lm(number~avgtemp+avgrain+avgwv+sun+dr+yr+yur, data=nd)
+summary(linear)
+
+
+#weather winter, summer
+
+rmOut <- nd
+
+
+#rmOut<-rmOut[-4,]
+#rmOut<-rmOut[-1,]
+#rmOut<-rmOut[-1,]
+#Outlier remove finish
+
+linear <- lm(number~avgtemp, data=rmOut)
+summary(linear)
+linear <- lm(number~avgrain, data=rmOut)
+summary(linear)
+linear <- lm(number~avgwv, data=rmOut)
+summary(linear)
+linear <- lm(number~avghum, data=rmOut)
+summary(linear)
+linear <- lm(number~avgc, data=rmOut)
+summary(linear)
+linear <- lm(number~sun, data=rmOut)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+avgc+sun, data=rmOut)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+avgc+sun+dr+yr+yur, data=rmOut)
+summary(linear)
+
+#All month finish!
+#성수기 비수기 시즌으로 회귀 분석
+
+Result <- NULL
+
+
+for(i in 1:nrow(nd))
+{
+  tmpString <- substr(nd$date[i],6,7)
+  nd$month[i] <- tmpString
+  
+  if( tmpString=='08' || tmpString=='10'||  tmpString=='07'  || tmpString=='01' || tmpString=='02' ) #|| tmpString=='11' ) #성수기만 하면 되게 좋음
+    Result <- rbind(Result,nd[i,])
+  
+}
+
+#Result <- sqldf("select sum(number),month from Result group by month")
+#plot(x=Result$month,y=Result$`sum(number)`)
+
+linear <- lm(number~avgtemp, data=Result)
+summary(linear)
+linear <- lm(number~avgrain, data=Result)
+summary(linear)
+linear <- lm(number~avgwv, data=Result)
+summary(linear)
+linear <- lm(number~avghum, data=Result)
+summary(linear)
+linear <- lm(number~avgc, data=Result)
+summary(linear)
+linear <- lm(number~sun, data=Result)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain, data=Result)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+dr+yr+yur, data=Result)
+summary(linear)
+
+vif(linear)
+outlierTest(linear)
+
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+dr+yr+yur, data=Result)
+summary(linear)
+
+Result <- Result[-473,]
+Result <- Result[-3,]
+
+#plot per month
+
+
+Result <- NULL
+
+
+for(i in 1:nrow(nd))
+{
+  tmpString <- substr(nd$date[i],6,7)
+  nd$month[i] <- tmpString
+  
+  if( tmpString=='01' || tmpString=='02'||  tmpString=='07'  || tmpString=='08' || tmpString=='10') #성수기만 하면 되게 좋음
+    Result <- rbind(Result,nd[i,])
+  
+}
+
+#Result <- sqldf("select sum(number),month from Result group by month")
+#plot(x=Result$month,y=Result$`sum(number)`)
+
+linear <- lm(number~avgtemp, data=Result)
+summary(linear)
+linear <- lm(number~avgrain, data=Result)
+summary(linear)
+linear <- lm(number~avgwv, data=Result)
+summary(linear)
+linear <- lm(number~avghum, data=Result)
+summary(linear)
+linear <- lm(number~avgc, data=Result)
+summary(linear)
+linear <- lm(number~sun, data=Result)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain, data=Result)
+summary(linear)
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+avgc+sun+dr+yr+yur, data=Result)
+summary(linear)
+
+vif(linear)
+outlierTest(linear)
+
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+dr+yr+yur, data=Result)
+summary(linear)
+
+vif(linear)
+outlierTest(linear)
+
+Result <- Result[-473,]
+Result <- Result[-3,]
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+dr+yr+yur, data=Result)
+summary(linear)
+
+#비수기
+Result <- NULL
+
+
+for(i in 1:nrow(nd))
+{
+  tmpString <- substr(nd$date[i],6,7)
+  nd$month[i] <- tmpString
+  
+  if( tmpString=='03' || tmpString=='04'||  tmpString=='05'  || tmpString=='06' || tmpString=='09' || tmpString=='11' || tmpString=='12') #성수기만 하면 되게 좋음
+    Result <- rbind(Result,nd[i,])
+  
+}
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+dr+yr+yur, data=Result)
+summary(linear)
+
+vif(linear)
+outlierTest(linear)
+
+Result <- Result[-1,]
+Reuslt <- Result[-2,]
+
+linear <- lm(number~avgtemp+avgrain+avgwv+avghum+dr+yr+yur, data=Result)
+summary(linear)

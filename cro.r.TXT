@@ -1,0 +1,206 @@
+#install.packages("XML")
+#install.packages("stringr")
+
+library(XML)
+library(stringr)
+
+url <- "http://www.visitjeju.or.kr/APP/bbs/board.php?bo_table=total_day&wr_id=1488"
+line <- readLines(url,encoding="UTF-8")
+#DataParser <- "<td colspan=\"5\" height=\"22\" style=\"width: 381px; height: 22px; text-align: center;\">"
+DataParser <- "2016"
+title <- line[str_detect(line,DataParser)]
+a <- substr(title,87,100)
+final <- NULL
+title <- NULL
+for(i in 1:1490)
+{
+  url <- paste0("http://www.visitjeju.or.kr/APP/bbs/board.php?bo_table=total_day&wr_id=",i)
+  line <- readLines(url,encoding="UTF-8")
+  #DataParser <- "2016"
+  #tmp <- line[str_detect(line,DataParser)]
+  listTmp <- grep('201',line) #2016
+  tmp <- line[listTmp[2]]
+  tmp <- str_trim(tmp) #
+  tmp <- gsub(" ","",tmp) #
+  tmp <- gsub("???","-",tmp)
+  tmp <- gsub("???","-",tmp)
+  tmp2 <- gsub("[^0-9^-]","",tmp)
+  subString <- ""
+  if(is.na(tmp2)==FALSE)  # if there are not NA value
+  {
+    subString <- substr(tmp2,str_length(tmp2),str_length(tmp2)) # find last character of string
+    if(subString == '-') # if that character is '-'
+    {
+      tmp2 <- substr(tmp2,1,str_length(tmp2)-1) # reduce '-'
+    }
+  }
+  
+  title <- rbind(title,tmp2) #after
+  
+  #2015??? 8??? 1???~ 2016??? 12??? 7???까?????????????????? ????????? ??????
+  #??? ????????? ????????? 분류가??????
+  #1490~988번까지, 1~987번까지 ???????????????
+  
+  
+}
+
+count <- NULL
+
+for(i in 1:943)
+{
+  url <- paste0("http://www.visitjeju.or.kr/APP/bbs/board.php?bo_table=total_day&wr_id=",i)
+  
+  line <- readLines(url,encoding="UTF-8")
+  
+  #DataParser <- "2016"
+  
+  #tmp <- line[str_detect(line,DataParser)]
+  
+  listTmp <- grep('??????',line) #2016
+  
+  tmp <- line[listTmp[1]+2]
+  
+  j <- 1
+  
+  start <- 2
+  end <- 0
+  
+  Finish <- FALSE
+  
+  if(is.na(tmp)==FALSE)
+  {
+    while(j<=str_length(tmp))
+    {
+      tt <- substr(tmp,j,j)
+      
+      if(tt == ">")
+      {
+        start <- j+1
+      }
+      if(tt== "/")
+      {
+        end <- j-2
+        break;
+      }
+      j <- j+1
+    }
+  }
+  
+  tmp2 <- substr(tmp,start,end)
+  
+  tmp2 <- gsub("[^0-9]","",tmp2)
+  
+  count <- rbind(count,tmp2) #after
+  
+  #2015??? 8??? 1???~ 2016??? 12??? 7???까?????????????????? ????????? ??????
+  #??? ????????? ????????? 분류가??????
+  
+  #1490~988번까지, 1~987번까지 ???????????????
+  
+}
+
+
+
+
+for(i in 944:986)
+{
+  url <- paste0("http://www.visitjeju.or.kr/APP/bbs/board.php?bo_table=total_day&wr_id=",i)
+  
+  line <- readLines(url,encoding="UTF-8")
+  
+  #DataParser <- "2016"
+  
+  #tmp <- line[str_detect(line,DataParser)]
+  
+  listTmp <- grep('??????',line) #2016
+  
+  tmp <- line[listTmp[1]+1]
+  
+  j <- 1
+  
+  start <- 2
+  end <- 0
+  
+  if(is.na(tmp)==FALSE)
+  {
+    while(j<=str_length(tmp))
+    {
+      tt <- substr(tmp,j,j)
+      
+      if(tt == ">")
+      {
+        start <- j
+      }
+      if(tt == "<" && start!=2)
+      {
+        end <- j
+        break;
+      }
+      j <- j+1
+    }
+  }
+  
+  tmp2 <- substr(tmp,start,end)
+  
+  tmp2 <- gsub("[^0-9]","",tmp2)
+  
+  count <- rbind(count,tmp2) #after
+  
+  #2015??? 8??? 1???~ 2016??? 12??? 7???까?????????????????? ????????? ??????
+  #??? ????????? ????????? 분류가??????
+  
+  #1490~988번까지, 1~987번까지 ???????????????
+  
+}
+
+for(i in 987:1490)
+{
+  url <- paste0("http://www.visitjeju.or.kr/APP/bbs/board.php?bo_table=total_day&wr_id=",i)
+  
+  line <- readLines(url,encoding="UTF-8")
+  
+  #DataParser <- "2016"
+  
+  #tmp <- line[str_detect(line,DataParser)]
+  
+  listTmp <- grep('??????',line) #2016
+  
+  tmp <- line[listTmp[1]+1]
+  
+  j <- 1
+  
+  start <- 2
+  end <- 0
+  
+  if(is.na(tmp)==FALSE)
+  {
+    while(j<=str_length(tmp))
+    {
+      tt <- substr(tmp,j,j)
+      
+      if(tt == ">")
+      {
+        start <- j
+      }
+      if(tt == "<" && start!=2)
+      {
+        end <- j
+        break;
+      }
+      j <- j+1
+    }
+  }
+  
+  tmp2 <- substr(tmp,start,end)
+  
+  tmp2 <- gsub("[^0-9]","",tmp2)
+  
+  count <- rbind(count,tmp2) #after
+  
+  #2015??? 8??? 1???~ 2016??? 12??? 7???까?????????????????? ????????? ??????
+  #??? ????????? ????????? 분류가??????
+  
+  #1490~988번까지, 1~987번까지 ???????????????
+  
+}
+
